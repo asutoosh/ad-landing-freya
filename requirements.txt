@@ -1,3 +1,7 @@
-python-telegram-bot
-python-dotenv
-telethon==1.0.0
+# Core dependencies
+python-telegram-bot==21.9
+python-dotenv==1.0.1
+telethon==1.36.0
+
+# Optional but recommended for better Telethon performance
+cryptg==0.4.0

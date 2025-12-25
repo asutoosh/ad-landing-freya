@@ -1,0 +1,26 @@
+[Unit]
+Description=Telegram Ad Bot - Worker Process
+After=network.target
+
+[Service]
+Type=simple
+User=botuser
+WorkingDirectory=/opt/telegram-bot
+Environment="PATH=/opt/telegram-bot/venv/bin"
+ExecStart=/opt/telegram-bot/venv/bin/python worker.py
+
+# Restart configuration
+Restart=always
+RestartSec=10
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=telegram-worker
+
+[Install]
+WantedBy=multi-user.target
