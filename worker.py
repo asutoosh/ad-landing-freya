@@ -131,20 +131,16 @@ async def send_task_message(bot: Bot, task: dict) -> bool:
             required_button = payload.get("required_button")
             
             if required_button:
-                # Load user data to check button clicks
-                from utils import load_json, USERS_FILE
-                users = load_json(USERS_FILE)
-                user = next((u for u in users if u.get('chat_id') == chat_id), None)
+                # Check button clicks using database
+                from utils import get_user_button_clicks
+                button_clicks = get_user_button_clicks(chat_id)
                 
-                if user:
-                    button_clicks = user.get('button_clicks', [])
-                    
-                    # Check if user clicked the required button
-                    clicked = any(click.get('button_type') == required_button for click in button_clicks)
-                    
-                    if clicked:
-                        print(f"✅ User {chat_id} clicked '{required_button}' button. Skipping 2h message.")
-                        return True  # Mark as successful so it's not retried
+                # Check if user clicked the required button
+                clicked = any(click.get('button_type') == required_button for click in button_clicks)
+                
+                if clicked:
+                    print(f"✅ User {chat_id} clicked '{required_button}' button. Skipping 2h message.")
+                    return True  # Mark as successful so it's not retried
         
         # Copy message from source channel (no "Forwarded from" tag)
         source_channel_id = payload.get("source_channel_id")
