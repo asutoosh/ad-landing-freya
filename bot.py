@@ -25,8 +25,7 @@ from utils import (
     create_user_tasks,
     cancel_user_tasks,
     get_all_users,
-    ensure_storage,
-    track_button_click
+    ensure_storage
 )
 
 # Load environment variables
@@ -549,10 +548,6 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
     chat_id = query.message.chat_id
     button_data = query.data
     
-    # Track the click
-    track_button_click(chat_id, button_data)
-    print(f"🔘 User {user_id} clicked button: {button_data}")
-    
     # Handle different button types
     if button_data == "join_channel":
         await query.edit_message_text(
@@ -594,11 +589,10 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⛔ This command is admin-only.")
         return
     
-    from utils import get_user_count, get_task_stats, get_button_stats
+    from utils import get_user_count, get_task_stats
     
     user_count = get_user_count()
     task_stats = get_task_stats()
-    button_stats = get_button_stats()
     
     stats_text = (
         f"📊 *Bot Statistics*\n\n"
@@ -608,11 +602,7 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"• Sent: {task_stats['sent']}\n"
         f"• Failed: {task_stats['failed']}\n"
         f"• Cancelled: {task_stats['cancelled']}\n"
-        f"• Total: {task_stats['total']}\n\n"
-        f"🔘 Button Clicks:\n"
-        f"• Total: {button_stats['total_clicks']}\n"
-        f"• Join Channel: {button_stats['join_channel']}\n"
-        f"• Verify: {button_stats['verify']}"
+        f"• Total: {task_stats['total']}"
     )
     
     await update.message.reply_text(stats_text, parse_mode="Markdown")

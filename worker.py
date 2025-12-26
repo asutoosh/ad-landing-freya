@@ -87,61 +87,6 @@ async def send_task_message(bot: Bot, task: dict) -> bool:
     task_type = task.get("task_type", "")
     
     try:
-        # Handle cleanup task - delete all messages and send farewell
-        if task_type == "msg_cleanup":
-            print(f"🧹 Starting cleanup for user {chat_id}")
-            
-            try:
-                # Delete all messages in the chat (from both sides if possible)
-                # Note: We can only delete messages sent by the bot
-                # The most reliable way is to use deleteMyMessages, but we'll try a different approach
-                
-                # Get chat history and delete bot messages
-                # Unfortunately, python-telegram-bot doesn't have a direct "delete all my messages" method
-                # So we'll send the farewell message and note that message deletion is limited by Telegram API
-                
-                farewell_msg = payload.get("farewell_message", "Thanks for using this bot! Nice to meet you 👋")
-                
-                # Send farewell message with FloodWait protection
-                result = await safe_send(
-                    bot,
-                    'send_message',
-                    chat_id=chat_id,
-                    text=farewell_msg
-                )
-                
-                if result:
-                    print(f"✅ Cleanup completed for user {chat_id}")
-                    return True
-                else:
-                    print(f"❌ Cleanup failed for user {chat_id}")
-                    return False
-                
-            except TelegramError as e:
-                error_msg = str(e)
-                if "blocked" in error_msg.lower() or "user is deactivated" in error_msg.lower():
-                    print(f"🚫 User {chat_id} blocked bot or account deactivated")
-                    return False
-                print(f"❌ Error during cleanup for {chat_id}: {e}")
-                return False
-        
-        
-        # Check if button click verification is required
-        if payload.get("check_button_click", False):
-            required_button = payload.get("required_button")
-            
-            if required_button:
-                # Check button clicks using database
-                from utils import get_user_button_clicks
-                button_clicks = get_user_button_clicks(chat_id)
-                
-                # Check if user clicked the required button
-                clicked = any(click.get('button_type') == required_button for click in button_clicks)
-                
-                if clicked:
-                    print(f"✅ User {chat_id} clicked '{required_button}' button. Skipping 2h message.")
-                    return True  # Mark as successful so it's not retried
-        
         # Copy message from source channel (no "Forwarded from" tag)
         source_channel_id = payload.get("source_channel_id")
         message_id = payload.get("message_id")

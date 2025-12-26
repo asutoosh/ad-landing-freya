@@ -18,10 +18,7 @@ from database import (
     update_task_status as db_update_task_status,
     cancel_user_tasks as db_cancel_user_tasks,
     get_user_count as db_get_user_count,
-    get_task_stats as db_get_task_stats,
-    track_button_click as db_track_button_click,
-    get_button_stats as db_get_button_stats,
-    get_user_button_clicks
+    get_task_stats as db_get_task_stats
 )
 
 # Keep storage directory for compatibility
@@ -78,14 +75,7 @@ def get_task_stats() -> Dict[str, int]:
     return db_get_task_stats()
 
 
-def track_button_click(chat_id: int, button_type: str) -> bool:
-    """Track a button click."""
-    return db_track_button_click(chat_id, button_type)
 
-
-def get_button_stats() -> Dict[str, int]:
-    """Get button click statistics."""
-    return db_get_button_stats()
 
 
 # Keep create_user_tasks as-is since it uses other functions
@@ -136,20 +126,7 @@ def create_user_tasks(chat_id: int, start_time: int) -> List[str]:
             }
         })
     
-    # Task 2.5: Cleanup - Delete all messages and send farewell
-    # Runs after MSG_3MIN_ID + cleanup delay (default 15 minutes)
-    cleanup_delay_minutes = int(os.getenv("CLEANUP_DELAY_MINUTES", "15"))
-    cleanup_total_delay = 180 + (cleanup_delay_minutes * 60)  # 3min + cleanup delay
-    
-    task_schedule.append({
-        "type": "msg_cleanup",
-        "delay": cleanup_total_delay,
-        "payload": {
-            "farewell_message": "Thanks for using this bot! Nice to meet you 👋"
-        }
-    })
-    
-    # Task 3: 2 hours - Final message (only if user didn't click button)
+    # Task 3: 2 hours - Final message (sent to ALL users)
 
     if msg_2h_id > 0:
         task_schedule.append({
@@ -158,8 +135,7 @@ def create_user_tasks(chat_id: int, start_time: int) -> List[str]:
             "payload": {
                 "message_id": msg_2h_id,
                 "source_channel_id": source_channel_id,
-                "check_button_click": True,  # Check if user clicked button before sending
-                "required_button": "join_channel"  # Skip if this button was clicked
+                "check_membership": False
             }
         })
     

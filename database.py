@@ -58,16 +58,6 @@ def init_db():
             )
         """)
         
-        # Button clicks table
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS button_clicks (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                chat_id INTEGER,
-                button_type TEXT,
-                timestamp TEXT
-            )
-        """)
-        
         # Indexes for performance
         conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_tasks_pending 
@@ -75,8 +65,7 @@ def init_db():
         """)
         
         conn.execute("""
-            CREATE INDEX IF NOT EXISTS idx_button_clicks_chat 
-            ON button_clicks(chat_id)
+
         """)
         
         conn.commit()
@@ -253,54 +242,6 @@ def cancel_user_tasks(chat_id: int) -> int:
         return 0
 
 
-def track_button_click(chat_id: int, button_type: str) -> bool:
-    """
-    Track a button click for a user.
-    
-    Args:
-        chat_id: Telegram chat ID
-        button_type: Type of button clicked
-        
-    Returns:
-        True if successful
-    """
-    try:
-        with get_db() as conn:
-            conn.execute("""
-                INSERT INTO button_clicks (chat_id, button_type, timestamp)
-                VALUES (?, ?, ?)
-            """, (chat_id, button_type, datetime.utcnow().isoformat()))
-            conn.commit()
-        return True
-    except Exception as e:
-        print(f"❌ Error tracking button click: {e}")
-        return False
-
-
-def get_user_button_clicks(chat_id: int) -> List[Dict[str, Any]]:
-    """
-    Get all button clicks for a user.
-    
-    Args:
-        chat_id: Telegram chat ID
-        
-    Returns:
-        List of button click records
-    """
-    try:
-        with get_db() as conn:
-            cursor = conn.execute("""
-                SELECT button_type, timestamp 
-                FROM button_clicks 
-                WHERE chat_id = ?
-                ORDER BY timestamp DESC
-            """, (chat_id,))
-            return [dict(row) for row in cursor.fetchall()]
-    except Exception as e:
-        print(f"❌ Error fetching button clicks: {e}")
-        return []
-
-
 def get_user_count() -> int:
     """Get total number of users."""
     try:
@@ -343,34 +284,3 @@ def get_task_stats() -> Dict[str, int]:
     except Exception as e:
         print(f"❌ Error getting task stats: {e}")
         return {"pending": 0, "sent": 0, "failed": 0, "cancelled": 0, "total": 0}
-
-
-def get_button_stats() -> Dict[str, int]:
-    """
-    Get statistics about button clicks.
-    
-    Returns:
-        Dictionary with click counts by button type
-    """
-    try:
-        with get_db() as conn:
-            cursor = conn.execute("""
-                SELECT button_type, COUNT(*) as count 
-                FROM button_clicks 
-                GROUP BY button_type
-            """)
-            
-            stats = {
-                "total_clicks": 0,
-                "join_channel": 0,
-                "verify": 0
-            }
-            
-            for row in cursor.fetchall():
-                stats[row['button_type']] = row['count']
-                stats['total_clicks'] += row['count']
-            
-            return stats
-    except Exception as e:
-        print(f"❌ Error getting button stats: {e}")
-        return {"total_clicks": 0, "join_channel": 0, "verify": 0}

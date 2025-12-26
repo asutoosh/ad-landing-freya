@@ -21,6 +21,9 @@ __pycache__/
 storage/
 *.json
 
+# Documentation - Keep locally but don't commit
+*.md
+
 # Virtual environment
 venv/
 env/
