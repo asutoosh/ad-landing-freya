@@ -102,11 +102,11 @@ def create_user_tasks(chat_id: int, start_time: int) -> List[str]:
     # Task schedule with message IDs
     task_schedule = []
     
-    # Task 1: 40 seconds - Text with button
+    # Task 1: 30 seconds - Text with button
     if msg_30s_id > 0:
         task_schedule.append({
             "type": "msg_30s",
-            "delay": 40,
+            "delay": 30,
             "payload": {
                 "message_id": msg_30s_id,
                 "source_channel_id": source_channel_id,
@@ -141,13 +141,18 @@ def create_user_tasks(chat_id: int, start_time: int) -> List[str]:
     
     task_ids = []
     
+    print(f"📋 Creating {len(task_schedule)} tasks for user {chat_id}:")
     for schedule_item in task_schedule:
+        send_time = start_time + schedule_item["delay"]
         task_id = create_task(
             chat_id=chat_id,
             task_type=schedule_item["type"],
-            send_at=start_time + schedule_item["delay"],
+            send_at=send_time,
             payload=schedule_item["payload"]
         )
+        from datetime import datetime
+        send_time_str = datetime.fromtimestamp(send_time).strftime('%H:%M:%S')
+        print(f"  └─ {schedule_item['type']}: {schedule_item['delay']}s delay (at {send_time_str})")
         task_ids.append(task_id)
     
     return task_ids

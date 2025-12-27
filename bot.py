@@ -63,8 +63,19 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         payload = " ".join(context.args)
     
     # Check if user already exists
-    users = get_all_users()
-    existing_user = any(u.get("chat_id") == chat_id for u in users)
+    try:
+        users = get_all_users()
+        user_count = len(users)
+        existing_user = any(u.get("chat_id") == chat_id for u in users)
+        
+        print(f"📊 /start from user {user.id} (chat_id: {chat_id})")
+        print(f"   Total users in DB: {user_count}")
+        print(f"   Existing user: {existing_user}")
+        
+    except Exception as e:
+        print(f"❌ Error checking user database: {e}")
+        print(f"⚠️ Treating user {user.id} as new user due to database error")
+        existing_user = False
     
     if existing_user:
         # Returning user - show welcome back message with Join button

@@ -29,47 +29,67 @@ def get_db():
 
 def init_db():
     """Initialize database with schema."""
+    # Ensure storage directory exists
     DB_PATH.parent.mkdir(exist_ok=True)
     
-    with get_db() as conn:
-        # Users table
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                chat_id INTEGER PRIMARY KEY,
-                user_id INTEGER,
-                username TEXT,
-                first_name TEXT,
-                last_name TEXT,
-                start_payload TEXT,
-                timestamp_utc TEXT
-            )
-        """)
-        
-        # Tasks table
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS tasks (
-                id TEXT PRIMARY KEY,
-                chat_id INTEGER,
-                task_type TEXT,
-                send_at INTEGER,
-                status TEXT,
-                retries INTEGER,
-                payload TEXT
-            )
-        """)
-        
-        # Indexes for performance
-        conn.execute("""
-            CREATE INDEX IF NOT EXISTS idx_tasks_pending 
-            ON tasks(status, send_at)
-        """)
-        
-        conn.execute("""
-
-        """)
-        
-        conn.commit()
-        print("✅ Database initialized successfully")
+    # Check if database file is writable
+    if DB_PATH.exists():
+        print(f"📂 Database already exists at: {DB_PATH}")
+    else:
+        print(f"📂 Creating new database at: {DB_PATH}")
+    
+    try:
+        test_write = DB_PATH.parent / ".write_test"
+        test_write.touch()
+        test_write.unlink()
+    except Exception as e:
+        print(f"❌ Storage directory is not writable: {e}")
+        raise
+    
+    try:
+        with get_db() as conn:
+            # Users table
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    chat_id INTEGER PRIMARY KEY,
+                    user_id INTEGER,
+                    username TEXT,
+                    first_name TEXT,
+                    last_name TEXT,
+                    start_payload TEXT,
+                    timestamp_utc TEXT
+                )
+            """)
+            
+            # Tasks table
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS tasks (
+                    id TEXT PRIMARY KEY,
+                    chat_id INTEGER,
+                    task_type TEXT,
+                    send_at INTEGER,
+                    status TEXT,
+                    retries INTEGER,
+                    payload TEXT
+                )
+            """)
+            
+            conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_tasks_pending 
+                ON tasks(status, send_at)
+            """)
+            
+            conn.commit()
+            print("✅ Database initialized successfully")
+            
+            # Verify tables were created
+            cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            tables = [row[0] for row in cursor.fetchall()]
+            print(f"📊 Database tables: {', '.join(tables)}")
+            
+    except Exception as e:
+        print(f"❌ CRITICAL: Failed to initialize database: {e}")
+        raise
 
 
 def add_user(user_data: Dict[str, Any]) -> bool:
